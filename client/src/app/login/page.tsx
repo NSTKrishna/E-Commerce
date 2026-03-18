@@ -29,11 +29,11 @@ export default function LoginPage() {
     try {
       const userData = await authService.login({ email, password })
       loginUser({
-          id: userData.id,
-          name: userData.name || "",
-          email: userData.email,
-          role: userData.role,
-          token: userData.token
+        id: userData.id,
+        name: userData.name || "",
+        email: userData.email,
+        role: userData.role,
+        token: userData.token
       })
 
       router.push("/dashboard")

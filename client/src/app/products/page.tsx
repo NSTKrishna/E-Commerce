@@ -44,7 +44,7 @@ export default function ProductsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-8 text-3xl font-bold">Our Products</h1>
-      
+
       {products.length === 0 ? (
         <p>No products available yet.</p>
       ) : (
@@ -53,10 +53,10 @@ export default function ProductsPage() {
             <div key={product.id} className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
               <div className="aspect-[4/3] bg-muted relative">
                 {product.imageUrl ? (
-                  <img 
-                    src={product.imageUrl} 
+                  <img
+                    src={product.imageUrl}
                     alt={product.name}
-                    className="h-full w-full object-cover" 
+                    className="h-full w-full object-cover"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gray-200">

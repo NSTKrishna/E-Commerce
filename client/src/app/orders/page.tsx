@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { useAuthStore } from '@/store/authStore';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

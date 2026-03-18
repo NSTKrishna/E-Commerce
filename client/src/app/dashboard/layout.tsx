@@ -25,8 +25,8 @@ import {
   Plus,
   ChevronDown,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { useAuthStore } from "@/store/authStore";
+import { authService } from "@/services/auth.service";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -43,56 +43,37 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  const { user, checkAuth, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
+    checkAuth();
+    setIsLoading(false);
+  }, [checkAuth]);
 
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      setIsLoading(false);
-    };
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+  const handleSignOut = () => {
+    authService.logout();
+    useAuthStore.getState().logout();
     router.push("/login");
-    router.refresh();
   };
 
   const getUserInitials = () => {
     if (!user) return "?";
-    const firstName = user.user_metadata?.first_name || "";
-    const lastName = user.user_metadata?.last_name || "";
-    if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase();
-    }
-    return user.email?.[0]?.toUpperCase() || "?";
+    const names = user.name.split(" ");
+    if (names.length >= 2) return `${names[0][0]}${names[1][0]}`.toUpperCase();
+    return user.name[0]?.toUpperCase() || "?";
   };
 
   const getUserDisplayName = () => {
     if (!user) return "User";
-    const firstName = user.user_metadata?.first_name;
-    const lastName = user.user_metadata?.last_name;
-    if (firstName && lastName) {
-      return `${firstName} ${lastName}`;
-    }
-    return user.email?.split("@")[0] || "User";
+    return user.name;
   };
 
   if (isLoading) {
@@ -115,9 +96,8 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-border bg-background transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-border bg-background transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
@@ -148,11 +128,10 @@ export default function DashboardLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <item.icon className="h-5 w-5" />
                   {item.name}

@@ -185,11 +185,10 @@ export default function BrowsePage() {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                selectedCategory === category
+              className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${selectedCategory === category
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
+                }`}
             >
               {category}
             </button>
@@ -296,21 +295,19 @@ export default function BrowsePage() {
               <div className="hidden items-center gap-1 rounded-lg border border-border p-1 sm:flex">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`rounded-md p-2 ${
-                    viewMode === "grid"
+                  className={`rounded-md p-2 ${viewMode === "grid"
                       ? "bg-secondary text-foreground"
                       : "text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   <Grid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`rounded-md p-2 ${
-                    viewMode === "list"
+                  className={`rounded-md p-2 ${viewMode === "list"
                       ? "bg-secondary text-foreground"
                       : "text-muted-foreground"
-                  }`}
+                    }`}
                 >
                   <List className="h-4 w-4" />
                 </button>

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,8 +15,7 @@ import {
   Clock,
   Plus,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import type { User } from "@supabase/supabase-js"
+import { useAuthStore } from "@/store/authStore"
 
 const stats = [
   {
@@ -116,22 +115,15 @@ function getStatusBadge(status: string) {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
+  const { user, checkAuth } = useAuthStore()
 
   useEffect(() => {
-    const supabase = createClient()
-    
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-    }
-
-    getUser()
-  }, [])
+    checkAuth()
+  }, [checkAuth])
 
   const getFirstName = () => {
     if (!user) return "there"
-    return user.user_metadata?.first_name || user.email?.split("@")[0] || "there"
+    return user.name.split(" ")[0] || "there"
   }
 
   return (

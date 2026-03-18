@@ -8,7 +8,6 @@ const errorHandler = (err, req, res, next) => {
     let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     let message = err.message;
 
-    // Check for Prisma typical errors or specific validation errors
     if (err.name === 'PrismaClientKnownRequestError') {
         statusCode = 400;
         message = 'Database operation failed.';

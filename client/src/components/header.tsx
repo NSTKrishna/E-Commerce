@@ -13,58 +13,39 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/client"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { useAuthStore } from "@/store/authStore"
+import { authService } from "@/services/auth.service"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const { user, logout, checkAuth } = useAuthStore()
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const supabase = createClient()
-    
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setIsLoading(false)
-    }
+    checkAuth()
+    setIsLoading(false)
+  }, [checkAuth])
 
-    getUser()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+  const handleSignOut = () => {
+    authService.logout()
+    logout()
     router.push("/")
     router.refresh()
   }
 
   const getUserInitials = () => {
     if (!user) return "?"
-    const firstName = user.user_metadata?.first_name || ""
-    const lastName = user.user_metadata?.last_name || ""
-    if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase()
+    const names = user.name.split(" ")
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase()
     }
-    return user.email?.[0]?.toUpperCase() || "?"
+    return user.name[0]?.toUpperCase() || "?"
   }
 
   const getUserDisplayName = () => {
     if (!user) return "User"
-    const firstName = user.user_metadata?.first_name
-    const lastName = user.user_metadata?.last_name
-    if (firstName && lastName) {
-      return `${firstName} ${lastName}`
-    }
-    return user.email?.split("@")[0] || "User"
+    return user.name
   }
 
   return (
@@ -94,7 +75,7 @@ export function Header() {
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
           </Button>
-          
+
           {isLoading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-secondary" />
           ) : user ? (
@@ -128,7 +109,7 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={handleSignOut}
                 >
@@ -183,8 +164,8 @@ export function Header() {
                       Dashboard
                     </Button>
                   </Link>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full text-destructive"
                     onClick={handleSignOut}
                   >

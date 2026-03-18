@@ -1,15 +1,14 @@
-# E-Commerce Platform Backend
+# BidBoard Platform Backend
 
-This is the Node.js/Express backend for the E-Commerce Platform. It provides RESTful APIs for user authentication, product management, and order processing, utilizing a PostgreSQL database accessed via Prisma ORM.
+This is the Node.js/Express backend for the BidBoard Request & Offers Platform. It provides RESTful APIs for user authentication, buyer service requests, and seller competitive bidding (offers), utilizing a PostgreSQL database accessed via Prisma ORM.
 
 ## Features
 
-- **Authentication**: JWT-based login and registration with hashed passwords.
-- **Product Management**: CRUD endpoints for products with admin protection.
-- **Order Processing**: Create orders and view order history with proper relationships between users, products, and orders.
+- **Authentication**: JWT-based login, registration, and user profiles with hashed passwords. Role-based integrations.
+- **Service Requests**: Buyers can post detailed requests containing project scopes, custom budgets, and urgency metrics.
+- **Bidding/Offers**: Sellers can browse active requests and submit competitive bids (offers) containing price and estimated delivery details.
 - **Validation**: Schema validation using `express-validator` to ensure data integrity.
-- **Logging**: HTTP request logging using `morgan`.
-- **Error Handling**: Centralized global error handling ensuring uniform JSON responses.
+- **Error Handling**: Centralized global error handling ensuring uniform JSON responses to the Next.js frontend.
 
 ## Setup Instructions
 
@@ -19,60 +18,58 @@ This is the Node.js/Express backend for the E-Commerce Platform. It provides RES
    ```
 
 2. **Environment Variables:**
-   Copy the provided `.env.example` file to `.env` and fill in your values:
+   Copy the `.env.example` file to `.env` and fill in your values safely:
    ```bash
    cp .env.example .env
    ```
-   At minimum, you will need `DATABASE_URL` for PostgreSQL and `JWT_SECRET` for token signing.
+   *Note: Using Neon serverless postgres requires mapping `DIRECT_URL` exclusively mapped for migration synchronizations.*
 
 3. **Database Migration:**
    Ensure the database is synced with Prisma:
    ```bash
    npx prisma db push
-   # OR
-   npx prisma migrate dev
    ```
 
 4. **Start the Server:**
    ```bash
-   # Development Server
    npm run dev
-
-   # Or standard execution
-   node index.js
    ```
 
 ## API Documentation
 
 ### Base URL: `/api`
 
-### Authentication Routes
+### 1. Authentication Routes (`/api/auth`)
 
 | Method | Endpoint        | Protection | Description                      | Body Requirements                          |
 | ------ | --------------- | ---------- | -------------------------------- | ------------------------------------------ |
-| POST   | `/auth/register`| Public     | Register a new user              | `{ name, email, password }`                |
-| POST   | `/auth/login`   | Public     | Authenticate user and get token  | `{ email, password }`                      |
+| POST   | `/register`     | Public     | Register a new user              | `{ name, email, password }`                |
+| POST   | `/login`        | Public     | Authenticate user and get token  | `{ email, password }`                      |
+| GET    | `/profile`      | Private    | Get logged-in user profile details| *Headers: `Authorization: Bearer <token>`* |
+| PUT    | `/profile`      | Private    | Update the user profile info     | Optional: `{ name, email, password }`      |
 
-*Note: Auth responses include the generated `token`, which should be sent as a Bearer token in the `Authorization` header for protected endpoints.*
+> **Note**: Auth responses include the generated `token`, which should be sent as a Bearer token in the `Authorization` header for protected endpoints marked "Private".
 
-### Product Routes
+### 2. Request Routes (`/api/requests`)
 
 | Method | Endpoint        | Protection | Description                      | Body Requirements                          |
 | ------ | --------------- | ---------- | -------------------------------- | ------------------------------------------ |
-| GET    | `/products`     | Public     | Fetch all products               | None                                       |
-| GET    | `/products/:id` | Public     | Fetch product by ID              | None                                       |
-| POST   | `/products`     | Admin      | Create a new product             | `{ name, description, price, stock, imageUrl }` |
-| PUT    | `/products/:id` | Admin      | Update an existing product       | `{ name, description, price, stock, imageUrl }` |
-| DELETE | `/products/:id` | Admin      | Delete a product                 | None                                       |
+| POST   | `/`             | Private    | Create a new custom request      | `{ title, description, category, budgetRange, customBudgetMin, customBudgetMax, urgency, images? }` |
+| GET    | `/`             | Public     | Fetch all public active requests | None                                       |
+| GET    | `/myrequests`   | Private    | Get logged-in buyer's requests   | None                                       |
+| GET    | `/:id`          | Public     | Fetch specific request by ID     | None                                       |
 
-### Order Routes
+> **Note**: Request fetches eagerly load nested structures. `/myrequests` and `/:id` will automatically include all assigned submitted *Offers* tied to that request.
 
-| Method | Endpoint          | Protection| Description                      | Body Requirements                                    |
-| ------ | ----------------- | --------- | -------------------------------- | ---------------------------------------------------- |
-| POST   | `/orders`         | User      | Create a new order               | `{ orderItems: [{ productId, quantity, price }], totalPrice }` |
-| GET    | `/orders/myorders`| User      | Get logged-in user's orders      | None                                                 |
-| GET    | `/orders/:id`     | User      | Get details for a specific order | None                                                 |
-| GET    | `/orders`         | Admin     | Get all orders in the system     | None                                                 |
+### 3. Offer (Bidding) Routes (`/api/offers`)
+
+| Method | Endpoint              | Protection | Description                           | Body Requirements                          |
+| ------ | --------------------- | ---------- | ------------------------------------- | ------------------------------------------ |
+| POST   | `/`                   | Private    | Submit a new bid to a request         | `{ requestId, price, message, deliveryDays? }` |
+| GET    | `/myoffers`           | Private    | Get all bids tied to logged-in seller | None                                       |
+| GET    | `/request/:requestId` | Private    | Get all competing bids for a request  | None                                       |
+
+> **Note**: A single seller user ID is restricted from posting multiple bids/offers on identical request scopes natively at the schema level (`@@unique([requestId, sellerId])`).
 
 ## Architecture Context
-Built utilizing a clean route/controller/middleware file structure. The system intercepts validation errors early down the pipeline, passing standard validation checks onto centralized error handlers for clean 400 Bad Request responses.
+Built utilizing a clean route/controller/middleware file structure dynamically synchronized with Prisma driver logic. Endpoints are specifically designed to serve the Next.js `authStore` configurations seamlessly over `http://localhost:5000`.

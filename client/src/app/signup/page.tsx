@@ -10,7 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Eye, EyeOff, Check } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { authService } from "@/services/auth.service"
+import { useAuthStore } from "@/store/authStore"
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -21,7 +22,9 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [error, setError] = useState<string | null>(null)
+
   const router = useRouter()
+  const login = useAuthStore((state) => state.login)
 
   const passwordRequirements = [
     { label: "At least 8 characters", met: password.length >= 8 },
@@ -42,52 +45,29 @@ export default function SignupPage() {
 
     setIsLoading(true)
 
-    const supabase = createClient()
-
     try {
-      const { error } = await supabase.auth.signUp({
+      const name = `${firstName} ${lastName}`.trim()
+
+      const response = await authService.register({
+        name,
         email,
         password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-            `${window.location.origin}/dashboard`,
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            user_type: userType,
-          },
-        },
-      })
+      });
 
-      if (error) throw error
+      login({
+        id: response._id,
+        name: response.name,
+        email: response.email,
+        role: response.role,
+        token: response.token
+      });
 
-      router.push("/signup/success")
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred during signup")
+      router.push("/dashboard")
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || "An error occurred during signup")
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleGoogleLogin = async () => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    })
-  }
-
-  const handleGitHubLogin = async () => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    })
   }
 
   return (
@@ -101,7 +81,7 @@ export default function SignupPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <span className="text-lg font-bold text-primary-foreground">B</span>
               </div>
-              <span className="text-2xl font-bold text-foreground">BidBoard</span>
+              <span className="text-xl font-bold text-foreground">BidBoard</span>
             </Link>
           </div>
 
@@ -119,9 +99,9 @@ export default function SignupPage() {
           </div>
 
           <div className="mt-8">
-            {/* Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="w-full" onClick={handleGoogleLogin} type="button">
+            {/* Social Login Buttons Disabled */}
+            <div className="grid grid-cols-2 gap-3 opacity-50 pointer-events-none">
+              <Button variant="outline" className="w-full" type="button">
                 <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
@@ -142,7 +122,7 @@ export default function SignupPage() {
                 </svg>
                 Google
               </Button>
-              <Button variant="outline" className="w-full" onClick={handleGitHubLogin} type="button">
+              <Button variant="outline" className="w-full" type="button">
                 <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
@@ -169,11 +149,10 @@ export default function SignupPage() {
                 >
                   <Label
                     htmlFor="buyer"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border-2 p-4 transition-colors ${
-                      userType === "buyer"
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border-2 p-4 transition-colors ${userType === "buyer"
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-muted-foreground"
-                    }`}
+                      }`}
                   >
                     <RadioGroupItem value="buyer" id="buyer" className="sr-only" />
                     <div className="text-center">
@@ -185,11 +164,10 @@ export default function SignupPage() {
                   </Label>
                   <Label
                     htmlFor="seller"
-                    className={`flex cursor-pointer items-center justify-center rounded-lg border-2 p-4 transition-colors ${
-                      userType === "seller"
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border-2 p-4 transition-colors ${userType === "seller"
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-muted-foreground"
-                    }`}
+                      }`}
                   >
                     <RadioGroupItem value="seller" id="seller" className="sr-only" />
                     <div className="text-center">
@@ -271,14 +249,12 @@ export default function SignupPage() {
                     {passwordRequirements.map((req, index) => (
                       <div
                         key={index}
-                        className={`flex items-center gap-2 text-xs ${
-                          req.met ? "text-foreground" : "text-muted-foreground"
-                        }`}
+                        className={`flex items-center gap-2 text-xs ${req.met ? "text-foreground" : "text-muted-foreground"
+                          }`}
                       >
                         <Check
-                          className={`h-3 w-3 ${
-                            req.met ? "text-foreground" : "text-muted-foreground/50"
-                          }`}
+                          className={`h-3 w-3 ${req.met ? "text-foreground" : "text-muted-foreground/50"
+                            }`}
                         />
                         {req.label}
                       </div>

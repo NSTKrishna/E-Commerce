@@ -1,6 +1,5 @@
 const { check, validationResult } = require('express-validator');
 
-// Reusable validator function
 const validate = (validations) => {
     return async (req, res, next) => {
         await Promise.all(validations.map((validation) => validation.run(req)));
@@ -14,7 +13,6 @@ const validate = (validations) => {
     };
 };
 
-// Validation rules
 const registerValidation = [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
@@ -28,21 +26,8 @@ const loginValidation = [
     check('password', 'Password is required').exists(),
 ];
 
-const productValidation = [
-    check('name', 'Name is required').not().isEmpty(),
-    check('price', 'Price must be a number').isNumeric(),
-    check('stock', 'Stock must be an integer').isInt(),
-];
-
-const orderValidation = [
-    check('orderItems', 'Order items must be an array and not empty').isArray({ min: 1 }),
-    check('totalPrice', 'Total price must be a number').isNumeric(),
-];
-
 module.exports = {
     validate,
     registerValidation,
     loginValidation,
-    productValidation,
-    orderValidation,
 };

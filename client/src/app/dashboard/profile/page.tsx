@@ -13,7 +13,6 @@ import { Switch } from "@/components/ui/switch"
 import {
   Camera,
   Mail,
-  Phone,
   MapPin,
   Calendar,
   Star,

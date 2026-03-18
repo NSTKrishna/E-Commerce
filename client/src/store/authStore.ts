@@ -1,20 +1,15 @@
 import { create } from 'zustand';
-import api from '@/lib/axios';
-
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: 'USER' | 'ADMIN';
-}
+import { User } from './types';
+import { authAPI } from './api';
 
 interface AuthState {
     user: User | null;
     token: string | null;
     isAuthenticated: boolean;
-    login: (userData: any) => void;
+    login: (userData: User & { token: string }) => void;
     logout: () => void;
     checkAuth: () => void;
+    updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -38,4 +33,16 @@ export const useAuthStore = create<AuthState>((set) => ({
             set({ user: JSON.parse(user), token, isAuthenticated: true });
         }
     },
+    updateProfile: async (data) => {
+        try {
+            const updatedUser = await authAPI.updateProfile(data);
+            const token = localStorage.getItem('token') || '';
+            const mergedUser = { ...updatedUser, token };
+            localStorage.setItem('user', JSON.stringify(mergedUser));
+            set({ user: mergedUser });
+        } catch (error) {
+            console.error('Failed to update profile:', error);
+            throw error;
+        }
+    }
 }));
