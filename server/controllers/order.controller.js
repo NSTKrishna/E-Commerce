@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/db');
 
 const addOrderItems = async (req, res) => {
     const { orderItems, totalPrice } = req.body;

@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const generateToken = require('../utils/jwt');
 
-const prisma = new PrismaClient();
+const prisma = require('../utils/db');
 
 const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
