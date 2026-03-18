@@ -1,63 +1,76 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
-
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
+// ---------------------------------------------------------
+// 1. Users & Authentication
+// ---------------------------------------------------------
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
   name      String?
-  role      Role     @default(USER)
+  role      Role     @default(USER) // Optional: can be upgraded to SELLER or ADMIN
+  
+  requests  Request[]  // Custom requests posted by this user (Buyer)
+  offers    Offer[]    // Bids submitted by this user (Seller)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  orders    Order[]
 }
-
-model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
-  price       Decimal
-  stock       Int
-  imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  orderItems  OrderItem[]
-}
-
-model Order {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  status    OrderStatus @default(PENDING)
-  total     Decimal
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  items     OrderItem[]
-}
-
-model OrderItem {
-  id        Int      @id @default(autoincrement())
-  orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id])
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Decimal
-}
-
 enum Role {
   USER
+  SELLER
   ADMIN
 }
-
-enum OrderStatus {
+// ---------------------------------------------------------
+// 3. BidBoard Custom Requests & Offers
+// ---------------------------------------------------------
+model Request {
+  id              Int      @id @default(autoincrement())
+  title           String   @db.VarChar(100)
+  description     String   @db.Text
+  category        String   // e.g., electronics, services, design
+  
+  // Budget Handling
+  budgetRange     String   // e.g., "100-500", "custom"
+  customBudgetMin Decimal?
+  customBudgetMax Decimal?
+  
+  urgency         String   // normal, urgent, flexible
+  images          String[] // Array of image URLs
+  status          RequestStatus @default(OPEN)
+  buyerId         Int
+  buyer           User     @relation(fields: [buyerId], references: [id])
+  offers          Offer[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+model Offer {
+  id           Int      @id @default(autoincrement())
+  price        Decimal  // The proposed bid amount
+  message      String   @db.Text
+  deliveryDays Int?     // Estimated completion time
+  status       OfferStatus @default(PENDING)
+  requestId    Int
+  request      Request  @relation(fields: [requestId], references: [id])
+  sellerId     Int
+  seller       User     @relation(fields: [sellerId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  // A seller can only bid once per request out-of-the-box
+  @@unique([requestId, sellerId])
+}
+enum RequestStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+enum OfferStatus {
   PENDING
-  COMPLETED
-  CANCELLED
+  ACCEPTED
+  REJECTED
 }

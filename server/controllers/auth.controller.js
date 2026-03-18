@@ -68,4 +68,70 @@ const loginUser = async (req, res, next) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+// @desc    Get user profile
+// @route   GET /api/auth/profile
+// @access  Private
+const getUserProfile = async (req, res, next) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id }
+        });
+
+        if (user) {
+            res.json({
+                _id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            });
+        } else {
+            res.status(404);
+            throw new Error('User not found');
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = async (req, res, next) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id }
+        });
+
+        if (user) {
+            let encodedPassword = user.password;
+            if (req.body.password) {
+                const salt = await bcrypt.genSalt(10);
+                encodedPassword = await bcrypt.hash(req.body.password, salt);
+            }
+
+            const updatedUser = await prisma.user.update({
+                where: { id: req.user.id },
+                data: {
+                    name: req.body.name || user.name,
+                    email: req.body.email || user.email,
+                    password: encodedPassword
+                }
+            });
+
+            res.json({
+                _id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                token: generateToken(updatedUser.id, updatedUser.role),
+            });
+        } else {
+            res.status(404);
+            throw new Error('User not found');
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile };
