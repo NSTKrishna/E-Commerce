@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Eye, EyeOff } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { authService } from "@/services/auth.service"
+import { useAuthStore } from "@/store/authStore"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -18,49 +19,39 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const loginUser = useAuthStore((state) => state.login)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const userData = await authService.login({ email, password })
+      loginUser({
+          id: userData.id,
+          name: userData.name || "",
+          email: userData.email,
+          role: userData.role,
+          token: userData.token
       })
-
-      if (error) throw error
 
       router.push("/dashboard")
       router.refresh()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred during login")
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || "An error occurred during login")
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Social login disabled temporarily since we migrated to generic Express backend
   const handleGoogleLogin = async () => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    })
+    alert('Google login not configured in custom backend yet.');
   }
 
   const handleGitHubLogin = async () => {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    })
+    alert('GitHub login not configured in custom backend yet.');
   }
 
   return (
