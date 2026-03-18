@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuthStore } from "@/store/authStore"
-import { authService } from "@/services/auth.service"
+
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -28,7 +28,6 @@ export function Header() {
   }, [checkAuth])
 
   const handleSignOut = () => {
-    authService.logout()
     logout()
     router.push("/")
     router.refresh()

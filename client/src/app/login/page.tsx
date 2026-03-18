@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Eye, EyeOff } from "lucide-react"
-import { authService } from "@/services/auth.service"
+import { authAPI } from "@/store/api"
 import { useAuthStore } from "@/store/authStore"
 
 export default function LoginPage() {
@@ -27,7 +27,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const userData = await authService.login({ email, password })
+      const userData = await authAPI.login({ email, password })
       loginUser({
         id: userData.id,
         name: userData.name || "",

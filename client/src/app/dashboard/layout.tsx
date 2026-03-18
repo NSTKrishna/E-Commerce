@@ -26,7 +26,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { authService } from "@/services/auth.service";
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -59,7 +58,6 @@ export default function DashboardLayout({
   }, [isLoading, isAuthenticated, router]);
 
   const handleSignOut = () => {
-    authService.logout();
     useAuthStore.getState().logout();
     router.push("/login");
   };

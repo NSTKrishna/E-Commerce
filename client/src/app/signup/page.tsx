@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Eye, EyeOff, Check } from "lucide-react"
-import { authService } from "@/services/auth.service"
+import { authAPI } from "@/store/api"
 import { useAuthStore } from "@/store/authStore"
 
 export default function SignupPage() {
@@ -48,7 +48,7 @@ export default function SignupPage() {
     try {
       const name = `${firstName} ${lastName}`.trim()
 
-      const response = await authService.register({
+      const response = await authAPI.register({
         name,
         email,
         password,

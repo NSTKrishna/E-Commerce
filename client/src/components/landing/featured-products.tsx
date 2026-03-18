@@ -1,8 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/axios';
 import Link from 'next/link';
+import api from '@/store/api';
 
 interface Product {
   id: number;

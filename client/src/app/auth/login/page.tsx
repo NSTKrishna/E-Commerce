@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import api from '@/lib/axios';
+import api from '@/store/api';
 import Link from 'next/link';
 
 export default function LoginPage() {

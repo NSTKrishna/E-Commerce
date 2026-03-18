@@ -1,8 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { productService, Product } from "@/services/product.service"
 import { Button } from "@/components/ui/button"
+import api from "@/store/api"
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl?: string;
+}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -12,7 +20,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await productService.getProducts()
+        const data = await api.get('/products').then(res => res.data)
         setProducts(data)
       } catch (err: any) {
         setError(err.message || "Failed to fetch products")

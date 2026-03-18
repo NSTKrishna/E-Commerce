@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import api from '@/lib/axios';
+import api from '@/store/api';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
