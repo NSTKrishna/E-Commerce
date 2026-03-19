@@ -12,18 +12,21 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:3000',
   'https://e-commerce-nu-ten-77.vercel.app',
-];
+].map(origin => origin.replace(/\/$/, ''));
 
 if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(...process.env.FRONTEND_URL.split(','));
+  const envOrigins = process.env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/$/, ''));
+  allowedOrigins.push(...envOrigins);
 }
 
 app.use(cors({
   origin: (origin, callback) => {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    
+    const sanitizedOrigin = origin.trim().replace(/\/$/, '');
+    if (allowedOrigins.indexOf(sanitizedOrigin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
       return callback(new Error(msg), false);
     }
     return callback(null, true);
