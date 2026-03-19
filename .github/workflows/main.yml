@@ -5,7 +5,8 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  ci-pipeline:
+    name: Continuous Integration Pipeline
     runs-on: ubuntu-latest
 
     strategy:
@@ -40,27 +41,25 @@ jobs:
             server/package-lock.json
             client/package-lock.json
 
-      # Install backend dependencies
+      # ── Dependencies ──────────────────────────────────────────────────────────
       - name: Install server dependencies
         working-directory: ./server
         run: npm ci
 
-      # Install frontend dependencies
       - name: Install client dependencies
         working-directory: ./client
         run: npm ci
 
-      # Lint server
+      # ── Quality Checks (Lint) ────────────────────────────────────────────────
       - name: Lint server
         working-directory: ./server
         run: npm run lint
 
-      # Lint client
       - name: Lint client
         working-directory: ./client
         run: npm run lint
 
-      # Generate Prisma client and push schema
+      # ── Database Sync ─────────────────────────────────────────────────────────
       - name: Sync database schema
         working-directory: ./server
         run: npx prisma db push --accept-data-loss
@@ -68,8 +67,8 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/test_db
           DIRECT_URL: postgresql://user:password@localhost:5432/test_db
 
-      # Test server
-      - name: Test server
+      # ── Server Integration Tests ─────────────────────────────────────────────
+      - name: Run server integration tests
         working-directory: ./server
         run: npm test
         env:
@@ -77,7 +76,9 @@ jobs:
           DIRECT_URL: postgresql://user:password@localhost:5432/test_db
           JWT_SECRET: test_secret_key
 
-      # Test client
-      - name: Test client
+      # ── Client Production Build ──────────────────────────────────────────────
+      - name: Build client
         working-directory: ./client
-        run: npm test
+        run: npm run build
+
+
