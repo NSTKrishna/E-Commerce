@@ -12,6 +12,21 @@ jobs:
       matrix:
         node-version: [20.x]
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,17 +53,27 @@ jobs:
       # Lint server
       - name: Lint server
         working-directory: ./server
-        run: npm run lint || echo "No server lint script"
+        run: npm run lint
 
       # Lint client
       - name: Lint client
         working-directory: ./client
-        run: npm run lint || echo "No client lint script"
+        run: npm run lint
+
+      # Generate Prisma client and push schema
+      - name: Sync database schema
+        working-directory: ./server
+        run: npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/test_db
 
       # Test server
       - name: Test server
         working-directory: ./server
         run: npm test
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/test_db
+          JWT_SECRET: test_secret_key
 
       # Test client
       - name: Test client
