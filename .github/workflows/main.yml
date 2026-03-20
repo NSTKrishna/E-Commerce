@@ -48,12 +48,7 @@ jobs:
 
       - name: Install client dependencies
         working-directory: ./client
-        run: npm 
-      
-      - name: Run idempotent setup script
-        run: |
-          chmod +x setup.sh
-          ./setup.sh
+        run: npm ci
 
       # ── Quality Checks (Lint) ────────────────────────────────────────────────
       - name: Lint server
